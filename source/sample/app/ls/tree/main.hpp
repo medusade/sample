@@ -84,18 +84,18 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////
-///  Class: visiter
+///  Class: finder
 ///////////////////////////////////////////////////////////////////////
-class visiter {
+class finder {
 public:
     virtual void search(branch* root) {
     }
-    virtual branch* visit(branch* b) {
-        return b;
+    virtual branch* found(branch* b) {
+        return 0;
     }
 };
+typedef branchest<finder> searcher;
 
-typedef branchest<visiter> searcher;
 ///////////////////////////////////////////////////////////////////////
 ///  Class: bfs
 ///////////////////////////////////////////////////////////////////////
@@ -106,15 +106,11 @@ public:
     bfs(branch* v) { this->search(v); }
     virtual void search(branch* v) {
         if (v) {
-            branch* b = 0;
-            branches::iterator bi;
             do {
-                visit(v);
-                for (bi = v->branches_.begin();
+                if (found(v)) { break; }
+                for (branches::iterator bi = v->branches_.begin();
                      bi != v->branches_.end(); ++bi) {
-                    if (b = *(bi)) {
-                        queue_branch(b);
-                    }
+                    queue_branch(*(bi));
                 }
             } while ((v = pop_branch()));
         }
@@ -131,18 +127,13 @@ public:
     dfs(branch* v) { this->search(v); }
     virtual void search(branch* v) {
         if (v) {
-            branch *b = 0;
-            branches::iterator bi;
-            push_branch(v);
-            while ((v = pop_branch())) {
-                visit(v);
-                for (bi = v->branches_.end();
+            do {
+                if (found(v)) { break; }
+                for (branches::iterator bi = v->branches_.end();
                      bi != v->branches_.begin();) {
-                    if (b = *(--bi)) {
-                        push_branch(b);
-                    }
+                    push_branch(*(--bi));
                 }
-            }
+            } while ((v = pop_branch()));
         }
     }
 };
@@ -170,9 +161,9 @@ protected:
     public:
         typedef tree::bfs extends;
         bfs(Extends& main, branch* root): main_(main) { this->search(root); }
-        virtual branch* visit(branch* b) {
+        virtual branch* found(branch* b) {
             main_.outln(b->c_str());
-            return b;
+            return 0;
         }
     protected:
         Extends& main_;
@@ -184,9 +175,9 @@ protected:
     public:
         typedef tree::dfs extends;
         dfs(Extends& main, branch* root): main_(main) { this->search(root); }
-        virtual branch* visit(branch* b) {
+        virtual branch* found(branch* b) {
             main_.outln(b->c_str());
-            return b;
+            return 0;
         }
     protected:
         Extends& main_;
