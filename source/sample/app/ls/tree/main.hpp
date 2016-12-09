@@ -31,27 +31,15 @@ namespace tree {
 
 class branch;
 typedef std::list<branch*> branches;
-class branch: public std::string {
-friend class fs;
-friend class bfs;
-friend class dfs;
-public:
-    typedef std::string extends;
-    branch() {}
-    branch(const char* c_str): extends(c_str) {}
-    virtual branch* queue_branch(branch* last) {
-        branches_.push_back(last);
-        return last;
-    }
-protected:
-    branches branches_;
-};
+typedef std::string string;
 
-class fs {
+///////////////////////////////////////////////////////////////////////
+///  Class: branchest
+///////////////////////////////////////////////////////////////////////
+template <class TExtends>
+class branchest: public TExtends {
 public:
-    fs(): branch_(0) {}
-    virtual void search(branch* root) {
-    }
+    branchest() {}
     virtual branch* queue_branch(branch* last) {
         if (last) { branches_.push_back(last); }
         return last;
@@ -78,50 +66,78 @@ public:
         }
         return last;
     }
-    virtual branch* visit_branch(branch* b) {
-        return b;
-    }
 protected:
     branches branches_;
-    branch* branch_;
 };
 
-class bfs: public fs {
+typedef branchest<string> branch_extends;
+///////////////////////////////////////////////////////////////////////
+///  Class: branch
+///////////////////////////////////////////////////////////////////////
+class branch: public branch_extends {
+friend class bfs;
+friend class dfs;
 public:
-    typedef fs extends;
-    bfs() {}
-    bfs(branch* root) { this->search(root); }
+    typedef branch_extends extends;
+    branch() {}
+    branch(const char* chars) { this->append(chars); }
+};
+
+///////////////////////////////////////////////////////////////////////
+///  Class: visiter
+///////////////////////////////////////////////////////////////////////
+class visiter {
+public:
     virtual void search(branch* root) {
-        if (branch_ = (root)) {
+    }
+    virtual branch* visit(branch* b) {
+        return b;
+    }
+};
+
+typedef branchest<visiter> searcher;
+///////////////////////////////////////////////////////////////////////
+///  Class: bfs
+///////////////////////////////////////////////////////////////////////
+class bfs: public searcher {
+public:
+    typedef searcher extends;
+    bfs() {}
+    bfs(branch* v) { this->search(v); }
+    virtual void search(branch* v) {
+        if (v) {
             branch* b = 0;
             branches::iterator bi;
             do {
-                visit_branch(branch_);
-                for (bi = branch_->branches_.begin();
-                     bi != branch_->branches_.end(); ++bi) {
+                visit(v);
+                for (bi = v->branches_.begin();
+                     bi != v->branches_.end(); ++bi) {
                     if (b = *(bi)) {
                         queue_branch(b);
                     }
                 }
-            } while ((branch_ = pop_branch()));
+            } while ((v = pop_branch()));
         }
     }
 };
 
-class dfs: public fs {
+///////////////////////////////////////////////////////////////////////
+///  Class: dfs
+///////////////////////////////////////////////////////////////////////
+class dfs: public searcher {
 public:
-    typedef fs extends;
+    typedef searcher extends;
     dfs() {}
-    dfs(branch* root) { this->search(root); }
-    virtual void search(branch* root) {
-        if (branch_ = (root)) {
+    dfs(branch* v) { this->search(v); }
+    virtual void search(branch* v) {
+        if (v) {
             branch *b = 0;
             branches::iterator bi;
-            push_branch(branch_);
-            while ((branch_ = pop_branch())) {
-                visit_branch(branch_);
-                for (bi = branch_->branches_.end();
-                     bi != branch_->branches_.begin();) {
+            push_branch(v);
+            while ((v = pop_branch())) {
+                visit(v);
+                for (bi = v->branches_.end();
+                     bi != v->branches_.begin();) {
                     if (b = *(--bi)) {
                         push_branch(b);
                     }
@@ -147,22 +163,28 @@ public:
     virtual ~main() {
     }
 protected:
+    ///////////////////////////////////////////////////////////////////////
+    ///  Class: bfs
+    ///////////////////////////////////////////////////////////////////////
     class bfs: public tree::bfs {
     public:
         typedef tree::bfs extends;
         bfs(Extends& main, branch* root): main_(main) { this->search(root); }
-        virtual branch* visit_branch(branch* b) {
+        virtual branch* visit(branch* b) {
             main_.outln(b->c_str());
             return b;
         }
     protected:
         Extends& main_;
     };
+    ///////////////////////////////////////////////////////////////////////
+    ///  Class: dfs
+    ///////////////////////////////////////////////////////////////////////
     class dfs: public tree::dfs {
     public:
         typedef tree::dfs extends;
         dfs(Extends& main, branch* root): main_(main) { this->search(root); }
-        virtual branch* visit_branch(branch* b) {
+        virtual branch* visit(branch* b) {
             main_.outln(b->c_str());
             return b;
         }
@@ -243,5 +265,3 @@ protected:
 } // namespace sample 
 
 #endif // _SAMPLE_APP_LS_TREE_MAIN_HPP 
-        
-
