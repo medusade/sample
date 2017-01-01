@@ -30,8 +30,41 @@ namespace ls {
 namespace tree {
 
 class branch;
-typedef std::list<branch*> branches;
 typedef std::string string;
+typedef std::list<branch*> branches_extends;
+///////////////////////////////////////////////////////////////////////
+///  Class: branches
+///////////////////////////////////////////////////////////////////////
+class branches: public branches_extends {
+public:
+    branches() {}
+    virtual branch* push_branch(branch* first) {
+        if (first) { push_front(first); }
+        return first;
+    }
+    virtual branch* pop_branch() {
+        branch* first = 0;
+        branches::iterator i = begin();
+        if (i != (end())) {
+            first = *i;
+            pop_front();
+        }
+        return first;
+    }
+    virtual branch* queue_branch(branch* last) {
+        if (last) { push_back(last); }
+        return last;
+    }
+    virtual branch* pull_branch() {
+        branch* last = 0;
+        branches::iterator i = end();
+        if (i != (begin())) {
+            last = *(--i);
+            pop_back();
+        }
+        return last;
+    }
+};
 
 ///////////////////////////////////////////////////////////////////////
 ///  Class: branchest
@@ -40,34 +73,23 @@ template <class TExtends>
 class branchest: public TExtends {
 public:
     branchest() {}
-    virtual branch* queue_branch(branch* last) {
-        if (last) { branches_.push_back(last); }
-        return last;
-    }
     virtual branch* push_branch(branch* first) {
-        if (first) { branches_.push_front(first); }
-        return first;
+        return branches_.push_branch(first);
     }
     virtual branch* pop_branch() {
-        branch* first = 0;
-        branches::iterator i = branches_.begin();
-        if (i != (branches_.end())) {
-            first = *i;
-            branches_.pop_front();
-        }
-        return first;
+        return branches_.pop_branch();
+    }
+    virtual branch* queue_branch(branch* last) {
+        return branches_.queue_branch(last);
     }
     virtual branch* pull_branch() {
-        branch* last = 0;
-        branches::iterator i = branches_.end();
-        if (i != (branches_.begin())) {
-            last = *(--i);
-            branches_.pop_back();
-        }
-        return last;
+        return branches_.pull_branch();
+    }
+    virtual tree::branches& branches() const {
+        return (tree::branches&)branches_;
     }
 protected:
-    branches branches_;
+    tree::branches branches_;
 };
 
 typedef branchest<string> branch_extends;
@@ -75,8 +97,6 @@ typedef branchest<string> branch_extends;
 ///  Class: branch
 ///////////////////////////////////////////////////////////////////////
 class branch: public branch_extends {
-friend class bfs;
-friend class dfs;
 public:
     typedef branch_extends extends;
     branch() {}
@@ -108,8 +128,8 @@ public:
         if (v) {
             do {
                 if (found(v)) { break; }
-                for (branches::iterator bi = v->branches_.begin();
-                     bi != v->branches_.end(); ++bi) {
+                for (branches::iterator bi = v->branches().begin();
+                     bi != v->branches().end(); ++bi) {
                     queue_branch(*(bi));
                 }
             } while ((v = pop_branch()));
@@ -129,13 +149,39 @@ public:
         if (v) {
             do {
                 if (found(v)) { break; }
-                for (branches::iterator bi = v->branches_.end();
-                     bi != v->branches_.begin();) {
+                for (branches::iterator bi = v->branches().end();
+                     bi != v->branches().begin();) {
                     push_branch(*(--bi));
                 }
             } while ((v = pop_branch()));
         }
     }
+};
+
+///////////////////////////////////////////////////////////////////////
+///  Class: ds
+///////////////////////////////////////////////////////////////////////
+class ds: public searcher {
+public:
+    typedef searcher extends;
+    ds() {}
+    ds(branch* v) { this->search(v); }
+    virtual void search(branch* v) {
+        if (v) {
+            do {
+                stack_.push_branch(v);
+                for (branches::iterator bi = v->branches().begin();
+                     bi != v->branches().end(); ++bi) {
+                    push_branch(*(bi));
+                }
+            } while ((v = pop_branch()));
+            while ((v = stack_.pop_branch())) {
+                if (found(v)) { break; }
+            }
+        }
+    }
+protected:
+    tree::branches stack_;
 };
 
 typedef ls::main_implement main_implement;
@@ -147,13 +193,17 @@ class main: virtual public main_implement, public main_extend {
 public:
     typedef main_implement Implements;
     typedef main_extend Extends;
+    typedef main Derives;
+
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
-    main(): branch_(0) {
+    main(): search_(0), branch_(0) {
     }
     virtual ~main() {
     }
+
 protected:
+    typedef void (Derives::*search)();
     ///////////////////////////////////////////////////////////////////////
     ///  Class: bfs
     ///////////////////////////////////////////////////////////////////////
@@ -183,39 +233,75 @@ protected:
         Extends& main_;
     };
     ///////////////////////////////////////////////////////////////////////
+    ///  Class: ds
+    ///////////////////////////////////////////////////////////////////////
+    class ds: public tree::ds {
+    public:
+        typedef tree::ds extends;
+        ds(Extends& main, branch* root): main_(main) { this->search(root); }
+        virtual branch* found(branch* b) {
+            main_.outln(b->c_str());
+            return 0;
+        }
+    protected:
+        Extends& main_;
+    };
+
+    ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
+    virtual void bfs_search() {
+        bfs search(*this, branch_);
+        outln();
+    }
+    virtual void dfs_search() {
+        dfs search(*this, branch_);
+        outln();
+    }
+    virtual void ds_search() {
+        ds search(*this, branch_);
+        outln();
+    }
+
+    ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
     virtual int before_run(int argc, char_t** argv, char_t** env) {
         branch_ = new branch();
         return 0;
     }
     virtual int after_run(int argc, char_t** argv, char_t** env) {
-        bfs bsearch(*this, branch_);
-        dfs dsearch(*this, branch_);
+        if ((search_)) {
+            (this->*search_)();
+        } else {
+            bfs_search();
+            dfs_search();
+            ds_search();
+        }
         return 0;
     }
+
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
     virtual int on_begin_directory_entry_default
     (const xos::os::fs::entry& e, const char_t* path = 0) {
-        int err = 0;
         branch *b = 0;
-        if ((branch_) && (b = (new branch(path)))) {
-            branch_->queue_branch(b);
-            push_branch(branch_);
-            branch_ = b;
-        } else {
-            return 1;
+        if ((branch_)) {
+            if ((b = new branch(path))) {
+                branch_->queue_branch(b);
+                push_branch(branch_);
+                branch_ = b;
+                return 0;
+            }
         }
-        return err;
+        return 1;
     }
     virtual int on_end_directory_entry_default
     (const xos::os::fs::entry& e, const char_t* path = 0) {
-        int err = 0;
-        if (!(branch_ = (pop_branch()))) {
-            return 1;
+        if ((branch_ = (pop_branch()))) {
+            return 0;
         }
-        return err;
+        return 1;
     }
+
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
     virtual int on_begin_file_entry_default
@@ -228,6 +314,7 @@ protected:
         int err = 0;
         return err;
     }
+
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
     virtual branch* push_branch(branch* first) {
@@ -243,9 +330,11 @@ protected:
         }
         return first;
     }
+
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
 protected:
+    search search_;
     branches branches_;
     branch* branch_;
 };

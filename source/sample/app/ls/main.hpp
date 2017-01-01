@@ -21,7 +21,7 @@
 #ifndef _SAMPLE_APP_LS_MAIN_HPP
 #define _SAMPLE_APP_LS_MAIN_HPP
 
-#include "xos/base/main.hpp"
+#include "xos/base/getopt/main.hpp"
 #include "xos/os/fs/directory/path.hpp"
 #include "xos/os/fs/directory/entry.hpp"
 #include "xos/os/fs/entry.hpp"
@@ -31,8 +31,8 @@ namespace sample {
 namespace app {
 namespace ls {
 
-typedef xos::base::main_implement main_implement;
-typedef xos::base::main main_extend;
+typedef xos::base::getopt::main_implement main_implement;
+typedef xos::base::getopt::main main_extend;
 ///////////////////////////////////////////////////////////////////////
 ///  Class: main
 ///////////////////////////////////////////////////////////////////////
@@ -44,55 +44,27 @@ public:
 
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
-    main(): on_entry_(0), is_deep_(true), is_recursive_(false) {
+    main(): on_entry_(0) {
     }
     virtual ~main() {
     }
 
 protected:
-    struct entry_path {
-        ///////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////
-        entry_path
-        (const xos::os::fs::directory::entry& entry, const char* path)
-        : entry_(entry), path_(path) {}
-        entry_path
-        (const entry_path& copy)
-        : entry_(copy.entry_), path_(copy.path_) {}
-        ///////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////
-        xos::os::fs::directory::entry& entry() const {
-            return ((xos::os::fs::directory::entry&) entry_);
-        }
-        const char* path() const {
-            return path_.chars();
-        }
-        ///////////////////////////////////////////////////////////////////////
-        ///////////////////////////////////////////////////////////////////////
-        xos::os::fs::directory::entry entry_;
-        string_t path_;
-    };
-    typedef ::std::list<entry_path> entry_path_stack;
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
     virtual int run(int argc, char_t** argv, char_t** env) {
         int err = 0;
+
         if ((1 < (argc))) {
             const char_t* path = 0;
             xos::fs::entry_type type = xos::fs::entry_type_none;
             xos::os::fs::entry e;
+
             for (int arg = optind; arg < argc; ++arg) {
                 if (((path = argv[arg])) && ((path[0]))) {
                     if (xos::fs::entry_type_none != (type = e.exists(path))) {
-                        if (!(err = on_entry(e, path))) {
-                            entry_path_stack::iterator i;
-                            while ((i = stack_.begin()) != (stack_.end())) {
-                                entry_path ep = *i;
-                                stack_.pop_front();
-                                if ((err = on_entry(ep.entry(), ep.path()))) {
-                                    break;
-                                }
-                            }
+                        if ((err = on_entry(e, path))) {
+                            break;
                         }
                     } else {
                         outl("Unable to find \"", path, "\"", 0);
@@ -101,6 +73,7 @@ protected:
                 }
             }
         } else {
+            err = usage(argc, argv, env);
         }
         return err;
     }
@@ -134,44 +107,31 @@ protected:
     virtual int on_directory_entry_default
     (const xos::os::fs::entry& e, const char_t* path = 0) {
         int err = 0;
-        if ((is_deep_)) {
-            if (!(err = on_begin_directory_entry_default(e, path))) {
-                xos::os::fs::directory::path d;
-                if ((d.open(path))) {
-                    xos::os::fs::directory::entry* de = 0;
-                    entry_path_stack stack;
-                    if ((de = d.get_first_entry())) {
-                        do {
-                            if (!(de->is_circular())) {
-                                string_t dp(path);
-                                const char_t* dpath = 0;
-                                dp.append("/");
-                                dp.append(de->name());
-                                if ((dpath = dp.has_chars())) {
-                                    if ((is_recursive_)) {
-                                        if ((err = on_entry_default(*de, dpath))) {
-                                            break;
-                                        }
-                                    } else {
-                                        entry_path ep(*de, dpath);
-                                        stack.push_front(ep);
-                                    }
+        if (!(err = on_begin_directory_entry_default(e, path))) {
+            xos::os::fs::directory::path d;
+
+            if ((d.open(path))) {
+                xos::os::fs::directory::entry* de = 0;
+
+                if ((de = d.get_first_entry())) {
+                    do {
+                        if (!(de->is_circular())) {
+                            const char_t* dpath = 0;
+                            string_t dp(path);
+
+                            dp.appendl("/", de->name(), NULL);
+                            if ((dpath = dp.has_chars())) {
+                                if ((err = on_entry_default(*de, dpath))) {
+                                    break;
                                 }
                             }
-                        } while ((de = d.get_next_entry()));
-                    }
-                    entry_path_stack::iterator i;
-                    while ((i = stack.begin()) != stack.end()) {
-                        stack_.push_front(*i);
-                        stack.pop_front();
-                    }
-                }
-                if (!(err)) {
-                    err = on_end_directory_entry_default(e, path);
+                        }
+                    } while ((de = d.get_next_entry()));
                 }
             }
-        } else {
-            err = on_file_entry_default(e, path);
+            if (!(err)) {
+                err = on_end_directory_entry_default(e, path);
+            }
         }
         return err;
     }
@@ -248,8 +208,6 @@ protected:
     ///////////////////////////////////////////////////////////////////////
 protected:
     on_entry_t on_entry_;
-    bool is_deep_, is_recursive_;
-    entry_path_stack stack_;
 };
 
 } // namespace ls
