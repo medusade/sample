@@ -22,7 +22,7 @@
 #define _SAMPLE_APP_LS_TREE_MAIN_HPP
 
 #include "sample/app/ls/main.hpp"
-#include <list>
+#include "sample/tree/branch.hpp"
 
 namespace sample {
 namespace app {
@@ -31,68 +31,8 @@ namespace tree {
 
 class branch;
 typedef std::string string;
-typedef std::list<branch*> branches_extends;
-///////////////////////////////////////////////////////////////////////
-///  Class: branches
-///////////////////////////////////////////////////////////////////////
-class branches: public branches_extends {
-public:
-    branches() {}
-    virtual branch* push_branch(branch* first) {
-        if (first) { push_front(first); }
-        return first;
-    }
-    virtual branch* pop_branch() {
-        branch* first = 0;
-        branches::iterator i = begin();
-        if (i != (end())) {
-            first = *i;
-            pop_front();
-        }
-        return first;
-    }
-    virtual branch* queue_branch(branch* last) {
-        if (last) { push_back(last); }
-        return last;
-    }
-    virtual branch* pull_branch() {
-        branch* last = 0;
-        branches::iterator i = end();
-        if (i != (begin())) {
-            last = *(--i);
-            pop_back();
-        }
-        return last;
-    }
-};
-
-///////////////////////////////////////////////////////////////////////
-///  Class: branchest
-///////////////////////////////////////////////////////////////////////
-template <class TExtends>
-class branchest: public TExtends {
-public:
-    branchest() {}
-    virtual branch* push_branch(branch* first) {
-        return branches_.push_branch(first);
-    }
-    virtual branch* pop_branch() {
-        return branches_.pop_branch();
-    }
-    virtual branch* queue_branch(branch* last) {
-        return branches_.queue_branch(last);
-    }
-    virtual branch* pull_branch() {
-        return branches_.pull_branch();
-    }
-    virtual tree::branches& branches() const {
-        return (tree::branches&)branches_;
-    }
-protected:
-    tree::branches branches_;
-};
-
-typedef branchest<string> branch_extends;
+typedef ::sample::tree::branchest<branch> branches;
+typedef ::sample::tree::brancht<branch, branches, string> branch_extends;
 ///////////////////////////////////////////////////////////////////////
 ///  Class: branch
 ///////////////////////////////////////////////////////////////////////
@@ -100,6 +40,7 @@ class branch: public branch_extends {
 public:
     typedef branch_extends extends;
     branch() {}
+    virtual ~branch() {}
     branch(const char* chars) { this->append(chars); }
 };
 
@@ -108,13 +49,10 @@ public:
 ///////////////////////////////////////////////////////////////////////
 class finder {
 public:
-    virtual void search(branch* root) {
-    }
-    virtual branch* found(branch* b) {
-        return 0;
-    }
+    virtual void search(branch* root) {}
+    virtual branch* found(branch* b) { return 0; }
 };
-typedef branchest<finder> searcher;
+typedef ::sample::tree::brancht<branch, branches, finder> searcher;
 
 ///////////////////////////////////////////////////////////////////////
 ///  Class: bfs

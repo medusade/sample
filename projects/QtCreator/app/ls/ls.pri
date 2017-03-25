@@ -21,12 +21,18 @@
 
 ########################################################################
 ls_HEADERS += \
-$${SAMPLE_SRC}/sample/app/ls/tree/main.hpp \
+$${SAMPLE_SRC}/sample/tree/branch.hpp \
+
+ls_SOURCES += \
+$${SAMPLE_SRC}/sample/tree/branch.cpp \
+
+########################################################################
+ls_HEADERS += \
 $${SAMPLE_SRC}/sample/app/ls/main.hpp \
 
 ls_SOURCES += \
-$${SAMPLE_SRC}/sample/app/ls/tree/main.cpp \
-$${XOS_SRC}/xos/base/main_main.cpp \
-$${XOS_SRC}/xos/base/getopt/main_opt.cpp \
+$${SAMPLE_SRC}/sample/app/ls/main.cpp \
+$${NADIR_SRC}/xos/base/main_main.cpp \
+$${NADIR_SRC}/xos/base/getopt/main_opt.cpp \
 
 ########################################################################

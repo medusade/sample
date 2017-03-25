@@ -19,17 +19,27 @@
 #   Date: 12/7/2016
 ########################################################################
 
+SAMPLE_OS = macosx
 QMAKE_CXXFLAGS += -std=c++11
 
 ########################################################################
-# xos
-XOS_BLD = ../$${XOS_PKG}/build/macosx/QtCreator/$${SAMPLE_BLD_CONFIG}
-XOS_LIB = $${XOS_BLD}/lib
+# nadir
+NADIR_BLD = ../$${NADIR_PKG}/build/$${SAMPLE_OS}/QtCreator/$${SAMPLE_BLD_CONFIG}
+NADIR_LIB = $${NADIR_BLD}/lib
+
+xosnadir_LIBS += \
+-L$${NADIR_LIB}/libxosnadir \
+-lxosnadir \
+-lpthread \
+-ldl \
+
+nadir_LIBS += \
+-L$${NADIR_LIB}/libnadir \
+-lnadir \
+-lpthread \
+-ldl \
 
 ########################################################################
 # sample
 sample_LIBS += \
--L$${XOS_LIB}/libxosnadir \
--lxosnadir \
--lpthread \
--ldl \
+$${xosnadir_LIBS} \

@@ -25,7 +25,6 @@
 #include "xos/os/fs/directory/path.hpp"
 #include "xos/os/fs/directory/entry.hpp"
 #include "xos/os/fs/entry.hpp"
-#include <list>
 
 namespace sample {
 namespace app {
@@ -44,7 +43,7 @@ public:
 
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
-    main(): on_entry_(0) {
+    main(): on_entry_(0), depth_(0) {
     }
     virtual ~main() {
     }
@@ -61,6 +60,7 @@ protected:
             xos::os::fs::entry e;
 
             for (int arg = optind; arg < argc; ++arg) {
+                this->increase_depth();
                 if (((path = argv[arg])) && ((path[0]))) {
                     if (xos::fs::entry_type_none != (type = e.exists(path))) {
                         if ((err = on_entry(e, path))) {
@@ -71,6 +71,7 @@ protected:
                         outln();
                     }
                 }
+                this->decrease_depth();
             }
         } else {
             err = usage(argc, argv, env);
@@ -114,6 +115,7 @@ protected:
                 xos::os::fs::directory::entry* de = 0;
 
                 if ((de = d.get_first_entry())) {
+                    this->increase_depth();
                     do {
                         if (!(de->is_circular())) {
                             const char_t* dpath = 0;
@@ -127,6 +129,7 @@ protected:
                             }
                         }
                     } while ((de = d.get_next_entry()));
+                    this->decrease_depth();
                 }
             }
             if (!(err)) {
@@ -172,6 +175,9 @@ protected:
     virtual int on_begin_entry_default
     (const xos::os::fs::entry& e, const char_t* path = 0) {
         const xos::fs::time* tm = 0;
+        string_t depth;
+        outl("depth = ", (depth.assign_size(this->depth()).chars()), 0);
+        outln();
         outl("name = ", path, 0);
         outln();
         out("type =");
@@ -200,6 +206,26 @@ protected:
 
     ///////////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////
+    virtual size_t increase_depth() {
+        ++depth_;
+        return depth_;
+    }
+    virtual size_t decrease_depth() {
+        if ((depth_)) {
+            --depth_;
+        }
+        return depth_;
+    }
+    virtual size_t set_depth(size_t to) {
+        depth_ = to;
+        return depth_;
+    }
+    virtual size_t depth() const {
+        return depth_;
+    }
+
+    ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////
 protected:
     typedef int (Derives::*on_entry_t)
     (const xos::os::fs::entry& e, const char_t* path);
@@ -208,6 +234,7 @@ protected:
     ///////////////////////////////////////////////////////////////////////
 protected:
     on_entry_t on_entry_;
+    size_t depth_;
 };
 
 } // namespace ls

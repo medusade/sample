@@ -18,7 +18,6 @@
 # Author: $author$
 #   Date: 12/7/2016
 ########################################################################
-
 SAMPLE_PKG = ../../../../..
 SAMPLE_BLD = ../..
 SAMPLE_PRJ = $${SAMPLE_PKG}
@@ -28,27 +27,33 @@ SAMPLE_SRC = $${SAMPLE_PKG}/source
 
 CONFIG(debug, debug|release) {
 SAMPLE_BLD_CONFIG = Debug
+xosnadir_DEFINES += DEBUG_BUILD
 } else {
 SAMPLE_BLD_CONFIG = Release
+xosnadir_DEFINES += RELEASE_BUILD
 }
 
 ########################################################################
-# xos
-XOS_PKG = $${SAMPLE_PKG}/../nadir
-XOS_PRJ = $${XOS_PKG}
-XOS_SRC = $${XOS_PKG}/src
+# nadir
+NADIR_PKG = $${SAMPLE_PKG}/../nadir
+NADIR_PRJ = $${NADIR_PKG}
+NADIR_SRC = $${NADIR_PKG}/src
 
-xos_INCLUDEPATH += \
-$${XOS_SRC} \
+nadir_INCLUDEPATH += \
+$${NADIR_SRC} \
 
-xos_DEFINES += \
+xosnadir_DEFINES += \
+
+nadir_DEFINES += \
+USE_NADIR_BASE \
+$${xosnadir_DEFINES} \
 
 ########################################################################
 # sample
 sample_INCLUDEPATH += \
 $${SAMPLE_SRC} \
-$${xos_INCLUDEPATH} \
+$${nadir_INCLUDEPATH} \
 
 sample_DEFINES += \
-$${xos_DEFINES} \
+$${xosnadir_DEFINES} \
 
