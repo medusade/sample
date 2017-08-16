@@ -21,17 +21,31 @@
 
 ########################################################################
 ls_HEADERS += \
+$${SAMPLE_SRC}/sample/tree/searcher.hpp \
 $${SAMPLE_SRC}/sample/tree/branch.hpp \
 
 ls_SOURCES += \
+$${SAMPLE_SRC}/sample/tree/searcher.cpp \
 $${SAMPLE_SRC}/sample/tree/branch.cpp \
 
 ########################################################################
 ls_HEADERS += \
+$${SAMPLE_SRC}/sample/app/ls/tree/main.hpp \
 $${SAMPLE_SRC}/sample/app/ls/main.hpp \
 
 ls_SOURCES += \
-$${SAMPLE_SRC}/sample/app/ls/main.cpp \
+$${SAMPLE_SRC}/sample/app/ls/tree/main.cpp \
+
+_ls_HEADERS += \
+$${SAMPLE_SRC}/sample/app/filter/main.hpp \
+
+_ls_SOURCES += \
+$${SAMPLE_SRC}/sample/app/filter/main.cpp \
+
+########################################################################
+ls_HEADERS += \
+
+ls_SOURCES += \
 $${NADIR_SRC}/xos/base/main_main.cpp \
 $${NADIR_SRC}/xos/base/getopt/main_opt.cpp \
 
