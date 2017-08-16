@@ -23,6 +23,7 @@
 
 #include "sample/app/ls/main.hpp"
 #include "sample/tree/branch.hpp"
+#include "sample/tree/searcher.hpp"
 
 namespace sample {
 namespace app {
@@ -44,83 +45,11 @@ public:
     branch(const char* chars) { this->append(chars); }
 };
 
-///////////////////////////////////////////////////////////////////////
-///  Class: finder
-///////////////////////////////////////////////////////////////////////
-class finder {
-public:
-    virtual void search(branch* root) {}
-    virtual branch* found(branch* b) { return 0; }
-};
-typedef ::sample::tree::brancht<branch, branches, finder> searcher;
-
-///////////////////////////////////////////////////////////////////////
-///  Class: bfs
-///////////////////////////////////////////////////////////////////////
-class bfs: public searcher {
-public:
-    typedef searcher extends;
-    bfs() {}
-    bfs(branch* v) { this->search(v); }
-    virtual void search(branch* v) {
-        if (v) {
-            do {
-                if (found(v)) { break; }
-                for (branches::iterator bi = v->branches().begin();
-                     bi != v->branches().end(); ++bi) {
-                    queue_branch(*(bi));
-                }
-            } while ((v = pop_branch()));
-        }
-    }
-};
-
-///////////////////////////////////////////////////////////////////////
-///  Class: dfs
-///////////////////////////////////////////////////////////////////////
-class dfs: public searcher {
-public:
-    typedef searcher extends;
-    dfs() {}
-    dfs(branch* v) { this->search(v); }
-    virtual void search(branch* v) {
-        if (v) {
-            do {
-                if (found(v)) { break; }
-                for (branches::iterator bi = v->branches().end();
-                     bi != v->branches().begin();) {
-                    push_branch(*(--bi));
-                }
-            } while ((v = pop_branch()));
-        }
-    }
-};
-
-///////////////////////////////////////////////////////////////////////
-///  Class: ds
-///////////////////////////////////////////////////////////////////////
-class ds: public searcher {
-public:
-    typedef searcher extends;
-    ds() {}
-    ds(branch* v) { this->search(v); }
-    virtual void search(branch* v) {
-        if (v) {
-            do {
-                stack_.push_branch(v);
-                for (branches::iterator bi = v->branches().begin();
-                     bi != v->branches().end(); ++bi) {
-                    push_branch(*(bi));
-                }
-            } while ((v = pop_branch()));
-            while ((v = stack_.pop_branch())) {
-                if (found(v)) { break; }
-            }
-        }
-    }
-protected:
-    tree::branches stack_;
-};
+typedef ::sample::tree::brancht
+<branch, branches, ::sample::tree::searchert<branch> > searcher;
+typedef ::sample::tree::bfst<branch, branches, searcher> bfs;
+typedef ::sample::tree::dfst<branch, branches, searcher> dfs;
+typedef ::sample::tree::dst<branch, branches, searcher> ds;
 
 typedef ls::main_implement main_implement;
 typedef ls::main main_extend;
